@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Plus, Edit, Trash2, Search } from 'lucide-react'
+import { ImageUpload } from '@/components/ImageUpload'
 
 interface Product {
   id: string
