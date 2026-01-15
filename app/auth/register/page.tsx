@@ -29,10 +29,12 @@ export default function RegisterPage() {
     const supabase = createClient()
     
     // Sign up with metadata so the trigger can create the profile
+    // Note: email confirmation is handled by database trigger
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/login`,
         data: {
           name: name,
           role: role,

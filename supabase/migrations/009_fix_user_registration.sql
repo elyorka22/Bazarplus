@@ -1,3 +1,4 @@
+
 -- Fix user registration by allowing users to insert their own profile
 -- This migration adds an INSERT policy for user_profiles and a helper function
 
