@@ -71,30 +71,53 @@ export function BotManagementTab() {
     try {
       const supabase = createClient()
       
-      const { data: existing } = await supabase
+      const { data: existing, error: checkError } = await supabase
         .from('bot_settings')
         .select('id')
         .eq('key', 'welcome_message')
         .single()
 
+      console.log('Existing welcome message:', existing)
+      console.log('Check error:', checkError)
+
       if (existing) {
-        await supabase
+        const { data, error } = await supabase
           .from('bot_settings')
           .update({ value: welcomeMessage })
           .eq('key', 'welcome_message')
+          .select()
+
+        console.log('Update result:', data)
+        console.log('Update error:', error)
+
+        if (error) {
+          alert('Ошибка обновления сообщения: ' + error.message)
+          return
+        }
       } else {
-        await supabase
+        const { data, error } = await supabase
           .from('bot_settings')
           .insert({
             key: 'welcome_message',
             value: welcomeMessage,
             description: 'Приветственное сообщение бота',
           })
+          .select()
+
+        console.log('Insert result:', data)
+        console.log('Insert error:', error)
+
+        if (error) {
+          alert('Ошибка создания сообщения: ' + error.message)
+          return
+        }
       }
       
-      alert('Сообщение сохранено')
+      alert('Сообщение успешно сохранено!')
+      loadData() // Перезагрузить данные для отображения
     } catch (error) {
-      alert('Ошибка сохранения сообщения')
+      console.error('Error saving welcome message:', error)
+      alert('Ошибка сохранения сообщения: ' + (error instanceof Error ? error.message : 'Неизвестная ошибка'))
     }
   }
 
