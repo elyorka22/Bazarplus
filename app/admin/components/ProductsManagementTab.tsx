@@ -125,27 +125,37 @@ export function ProductsManagementTab() {
     try {
       const supabase = createClient()
       
+      // Убедиться, что image_url не пустая строка, а null если нет изображения
+      const imageUrl = formData.image_url && formData.image_url.trim() !== '' 
+        ? formData.image_url.trim() 
+        : null
+      
       const productData = {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
-        image_url: formData.image_url || null,
+        image_url: imageUrl,
         store_id: formData.store_id,
         is_active: formData.is_active,
       }
 
+      console.log('Saving product with data:', productData)
+
       if (editingProduct) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('products')
           .update(productData)
           .eq('id', editingProduct.id)
+          .select()
 
         if (error) {
           alert('Ошибка обновления товара: ' + error.message)
           console.error('Update error:', error)
           return
         }
+        
+        console.log('Product updated:', data)
       } else {
         const { data, error } = await supabase
           .from('products')
@@ -157,6 +167,8 @@ export function ProductsManagementTab() {
           console.error('Insert error:', error)
           return
         }
+        
+        console.log('Product created:', data)
       }
       
       setShowForm(false)
@@ -327,7 +339,10 @@ export function ProductsManagementTab() {
               </div>
               <ImageUpload
                 currentImage={formData.image_url}
-                onImageUploaded={(url) => setFormData({ ...formData, image_url: url || '' })}
+                onImageUploaded={(url) => {
+                  console.log('Image uploaded, URL:', url)
+                  setFormData({ ...formData, image_url: url || '' })
+                }}
                 folder="products"
                 label="Mahsulot rasmi"
               />

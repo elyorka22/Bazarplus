@@ -41,7 +41,7 @@ export default function ClientPage() {
   async function loadProducts() {
     try {
       const supabase = createClient()
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('products')
         .select(`
           *,
@@ -52,11 +52,20 @@ export default function ClientPage() {
         .eq('is_active', true)
         .gt('stock', 0)
 
+      if (error) {
+        console.error('Error loading products:', error)
+        setProducts([])
+        return
+      }
+
       if (data && data.length > 0) {
-        const formatted = data.map((p: any) => ({
-          ...p,
-          store_name: p.stores?.name || 'Noma\'lum do\'kon',
-        }))
+        const formatted = data.map((p: any) => {
+          console.log('Product loaded:', p.id, 'image_url:', p.image_url)
+          return {
+            ...p,
+            store_name: p.stores?.name || 'Noma\'lum do\'kon',
+          }
+        })
         setProducts(formatted)
       } else {
         setProducts([])
