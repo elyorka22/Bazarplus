@@ -120,11 +120,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (savedCart) {
         try {
           const cartData = JSON.parse(savedCart)
-          const items = cartData.map((item: any) => ({
+          const items: CartItem[] = cartData.map((item: any) => ({
             product: item.product,
             quantity: item.quantity,
           }))
-          const newCount = items.reduce((sum: number, item: any) => sum + item.quantity, 0)
+          const newCount = items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0)
           if (newCount !== cartCount) {
             loadCart()
           }
