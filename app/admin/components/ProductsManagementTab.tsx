@@ -28,6 +28,7 @@ export function ProductsManagementTab() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [stores, setStores] = useState<Array<{ id: string; name: string }>>([])
   const [imageUploading, setImageUploading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -185,6 +186,8 @@ export function ProductsManagementTab() {
     } catch (error) {
       console.error('Error saving product:', error)
       alert('Ошибка сохранения товара: ' + (error instanceof Error ? error.message : 'Неизвестная ошибка'))
+    } finally {
+      setSubmitting(false)
     }
   }
 
