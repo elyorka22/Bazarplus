@@ -32,7 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     try {
       const supabase = createClient()
       
-      supabase.auth.getUser().then(({ data: { user } }) => {
+      supabase.auth.getUser().then(({ data: { user } }: { data: { user: User | null } }) => {
         setUser(user)
         if (user) {
           fetchUserRole(user.id)
@@ -44,9 +44,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
 
       supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          fetchUserRole(session.user.id)
+        const user = session?.user ?? null
+        setUser(user)
+        if (user) {
+          fetchUserRole(user.id)
         } else {
           setRole(null)
           setLoading(false)
