@@ -181,6 +181,16 @@ export function CreateStoreTab() {
         return
       }
 
+      // Проверить, что админ все еще залогинен
+      // Если нет (из-за signUp), перенаправить на логин
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser || (adminUser && currentUser.id !== adminUser.id)) {
+        // Админ был разлогинен из-за signUp, перенаправить на логин
+        alert('Магазин создан! Пожалуйста, войдите в систему заново как админ.')
+        window.location.href = '/auth/login'
+        return
+      }
+
       alert('Магазин успешно создан!')
       
       // Сбросить форму
