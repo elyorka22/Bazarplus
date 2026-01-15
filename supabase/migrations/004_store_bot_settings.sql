@@ -24,6 +24,8 @@ CREATE POLICY "Store owners can manage their bot buttons"
     )
   );
 
+-- Drop and recreate the view policy if it exists (already created in 003_admin_settings.sql)
+DROP POLICY IF EXISTS "Anyone can view active bot buttons" ON bot_buttons;
 CREATE POLICY "Anyone can view active bot buttons"
   ON bot_buttons FOR SELECT
   USING (is_active = true);
