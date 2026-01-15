@@ -14,16 +14,26 @@ CREATE POLICY "Users can view their own profile"
   ON user_profiles FOR SELECT
   USING (auth.uid() = id);
 
--- Политика для админов (должна быть, но пересоздадим для надежности)
+-- Политика для админов (используем функцию для избежания рекурсии)
 DROP POLICY IF EXISTS "Admins can view all profiles" ON user_profiles;
+
+-- Создать функцию для проверки, является ли пользователь админом
+CREATE OR REPLACE FUNCTION public.is_admin(user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_profiles
+    WHERE id = user_id AND role = 'admin'
+  );
+$$;
+
+-- Создать политику для админов
 CREATE POLICY "Admins can view all profiles"
   ON user_profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (public.is_admin(auth.uid()));
 
 -- ШАГ 2: Убедиться, что политики для banners существуют
 -- (должны быть в 003_admin_settings.sql, но проверим)
