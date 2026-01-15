@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Package, ShoppingBag, Utensils, Coffee, Apple, Carrot, Fish, Beef, Milk, Bread } from 'lucide-react'
+import { Package, ShoppingBag, Utensils, Coffee, Apple, Carrot, Fish, Beef, Milk } from 'lucide-react'
 
 interface Category {
   id: string
@@ -27,7 +27,7 @@ const iconMap: Record<string, any> = {
   fish: Fish,
   beef: Beef,
   milk: Milk,
-  bread: Bread,
+  bread: ShoppingBag, // Using ShoppingBag as fallback for bread
 }
 
 export function ProductCategories({ onCategorySelect }: { onCategorySelect?: (categoryId: string | null) => void }) {
