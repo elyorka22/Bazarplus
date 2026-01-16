@@ -23,17 +23,33 @@ export default function StorePage() {
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [store, setStore] = useState<{ id: string; name: string } | null>(null)
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     stock: '',
     image_url: '',
+    category_id: '',
   })
 
   useEffect(() => {
     loadProducts()
+    loadCategories()
   }, [])
+
+  async function loadCategories() {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('product_categories')
+      .select('id, name')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true })
+
+    if (data) {
+      setCategories(data)
+    }
+  }
 
   async function loadProducts() {
     const supabase = createClient()
@@ -94,6 +110,7 @@ export default function StorePage() {
         price: product.price.toString(),
         stock: product.stock.toString(),
         image_url: product.image_url || '',
+        category_id: product.category_id || '',
       })
     } else {
       setEditingProduct(null)
@@ -103,6 +120,7 @@ export default function StorePage() {
         price: '',
         stock: '',
         image_url: '',
+        category_id: '',
       })
     }
     setShowForm(true)
@@ -128,6 +146,7 @@ export default function StorePage() {
       price: parseFloat(formData.price),
       stock: parseInt(formData.stock),
       image_url: formData.image_url || null,
+      category_id: formData.category_id || null,
       store_id: store.id,
       is_active: true,
     }
@@ -243,6 +262,23 @@ export default function StorePage() {
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Kategoriya
+                  </label>
+                  <select
+                    value={formData.category_id}
+                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Kategoriya tanlanmagan</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <ImageUpload
                   currentImage={formData.image_url}

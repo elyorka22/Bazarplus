@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, Edit, Trash2, Image as ImageIcon, Save } from 'lucide-react'
+import { Plus, Edit, Trash2, Image as ImageIcon, Save, Tag } from 'lucide-react'
 
 interface Banner {
   id: string
@@ -23,13 +23,23 @@ interface BecomeSellerPage {
   is_active: boolean
 }
 
+interface Category {
+  id: string
+  name: string
+  is_active: boolean
+  order_index: number
+}
+
 export function SiteSettingsTab() {
   const [banners, setBanners] = useState<Banner[]>([])
   const [becomeSellerPage, setBecomeSellerPage] = useState<BecomeSellerPage | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [showBannerForm, setShowBannerForm] = useState(false)
   const [showSellerForm, setShowSellerForm] = useState(false)
+  const [showCategoryForm, setShowCategoryForm] = useState(false)
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [bannerForm, setBannerForm] = useState({
     title: '',
     description: '',
@@ -44,6 +54,11 @@ export function SiteSettingsTab() {
     content: '',
     image_url: '',
     is_active: true,
+  })
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    is_active: true,
+    order_index: 0,
   })
 
   useEffect(() => {
@@ -76,6 +91,15 @@ export function SiteSettingsTab() {
           image_url: sellerData.image_url || '',
           is_active: sellerData.is_active,
         })
+      }
+
+      const { data: categoriesData } = await supabase
+        .from('product_categories')
+        .select('*')
+        .order('order_index', { ascending: true })
+
+      if (categoriesData) {
+        setCategories(categoriesData)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -164,6 +188,59 @@ export function SiteSettingsTab() {
     }
   }
 
+  function openCategoryForm(category?: Category) {
+    if (category) {
+      setEditingCategory(category)
+      setCategoryForm({
+        name: category.name,
+        is_active: category.is_active,
+        order_index: category.order_index,
+      })
+    } else {
+      setEditingCategory(null)
+      setCategoryForm({
+        name: '',
+        is_active: true,
+        order_index: categories.length,
+      })
+    }
+    setShowCategoryForm(true)
+  }
+
+  async function saveCategory(e: React.FormEvent) {
+    e.preventDefault()
+    try {
+      const supabase = createClient()
+      
+      if (editingCategory) {
+        await supabase
+          .from('product_categories')
+          .update(categoryForm)
+          .eq('id', editingCategory.id)
+      } else {
+        await supabase.from('product_categories').insert(categoryForm)
+      }
+      
+      setShowCategoryForm(false)
+      loadData()
+      alert('Категория успешно сохранена!')
+    } catch (error) {
+      alert('Ошибка сохранения категории: ' + (error instanceof Error ? error.message : 'Неизвестная ошибка'))
+    }
+  }
+
+  async function deleteCategory(id: string) {
+    if (!confirm('Удалить категорию? Товары с этой категорией останутся без категории.')) return
+    try {
+      const supabase = createClient()
+      await supabase.from('product_categories').delete().eq('id', id)
+      loadData()
+      alert('Категория удалена!')
+    } catch (error) {
+      alert('Ошибка удаления категории')
+    }
+  }
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -225,6 +302,58 @@ export function SiteSettingsTab() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Категории товаров */}
+      <div className="border-t pt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Tag className="w-6 h-6" />
+            Управление категориями товаров
+          </h2>
+          <button
+            onClick={() => openCategoryForm()}
+            className="bg-gradient-to-r from-primary-500 to-secondary-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Добавить категорию
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((category) => (
+            <div key={category.id} className="border rounded-lg p-4">
+              <h3 className="font-bold text-lg mb-2">{category.name}</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <span className={`px-2 py-1 rounded text-xs ${category.is_active ? 'bg-success-100 text-success-700' : 'bg-gray-100 text-gray-700'}`}>
+                  {category.is_active ? 'Активна' : 'Неактивна'}
+                </span>
+                <span className="text-xs text-gray-500">Порядок: {category.order_index}</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => openCategoryForm(category)}
+                  className="flex-1 bg-secondary-500 text-white px-3 py-1 rounded text-sm hover:opacity-90"
+                >
+                  <Edit className="w-4 h-4 inline mr-1" />
+                  Изменить
+                </button>
+                <button
+                  onClick={() => deleteCategory(category.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:opacity-90"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {categories.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            Категории не добавлены. Добавьте первую категорию.
+          </div>
+        )}
       </div>
 
       {/* Страница "Стать продавцом" */}
@@ -395,6 +524,56 @@ export function SiteSettingsTab() {
                   Сохранить
                 </button>
                 <button type="button" onClick={() => setShowSellerForm(false)} className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-300">
+                  Отмена
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Форма категории */}
+      {showCategoryForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full">
+            <h3 className="text-2xl font-bold mb-4">{editingCategory ? 'Изменить' : 'Добавить'} категорию</h3>
+            <form onSubmit={saveCategory} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Название категории *</label>
+                <input
+                  type="text"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                  required
+                  className="w-full px-4 py-2 border rounded-lg"
+                  placeholder="Например: Овощи и фрукты"
+                />
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={categoryForm.is_active}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, is_active: e.target.checked })}
+                  />
+                  Активна
+                </label>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Порядок</label>
+                  <input
+                    type="number"
+                    value={categoryForm.order_index}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, order_index: parseInt(e.target.value) || 0 })}
+                    className="w-24 px-4 py-2 border rounded-lg"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button type="submit" className="flex-1 bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-2 rounded-lg font-semibold hover:opacity-90">
+                  <Save className="w-4 h-4 inline mr-2" />
+                  Сохранить
+                </button>
+                <button type="button" onClick={() => setShowCategoryForm(false)} className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-300">
                   Отмена
                 </button>
               </div>

@@ -27,6 +27,7 @@ export function ProductsManagementTab() {
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [stores, setStores] = useState<Array<{ id: string; name: string }>>([])
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
   const [imageUploading, setImageUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -36,6 +37,7 @@ export function ProductsManagementTab() {
     stock: '',
     image_url: '',
     store_id: '',
+    category_id: '',
     is_active: true,
   })
 
@@ -88,6 +90,19 @@ export function ProductsManagementTab() {
       } else if (storesData) {
         setStores(storesData)
       }
+
+      // Загрузить категории
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('product_categories')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('order_index', { ascending: true })
+
+      if (categoriesError) {
+        console.error('Error loading categories:', categoriesError)
+      } else if (categoriesData) {
+        setCategories(categoriesData)
+      }
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -105,6 +120,7 @@ export function ProductsManagementTab() {
         stock: product.stock.toString(),
         image_url: product.image_url || '',
         store_id: product.store_id,
+        category_id: (product as any).category_id || '',
         is_active: product.is_active,
       })
     } else {
@@ -116,6 +132,7 @@ export function ProductsManagementTab() {
         stock: '',
         image_url: '',
         store_id: stores[0]?.id || '',
+        category_id: '',
         is_active: true,
       })
     }
@@ -142,6 +159,7 @@ export function ProductsManagementTab() {
         stock: parseInt(formData.stock),
         image_url: imageUrl,
         store_id: formData.store_id,
+        category_id: formData.category_id || null,
         is_active: formData.is_active,
       }
 
