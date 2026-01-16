@@ -306,6 +306,89 @@ export default function StorePage() {
                     ))}
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Qanday sotiladi? *
+                  </label>
+                  <select
+                    value={formData.sale_type}
+                    onChange={(e) => setFormData({ ...formData, sale_type: e.target.value })}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="by_kg">Kg bo'yicha</option>
+                    <option value="by_piece">Dona bo'yicha</option>
+                    <option value="by_package">Paket bo'yicha</option>
+                  </select>
+                </div>
+
+                {formData.sale_type === 'by_package' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Paket turi
+                    </label>
+                    <select
+                      value={formData.package_type}
+                      onChange={(e) => setFormData({ ...formData, package_type: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="">Tanlanmagan</option>
+                      <option value="1kg">1 kg</option>
+                      <option value="3kg">3 kg</option>
+                      <option value="5kg">5 kg</option>
+                      <option value="10kg">10 kg</option>
+                    </select>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Minimal buyurtma *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.min_order}
+                      onChange={(e) => setFormData({ ...formData, min_order: e.target.value })}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Maksimal buyurtma
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.max_order}
+                      onChange={(e) => setFormData({ ...formData, max_order: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      placeholder="Cheksiz"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Yorliq
+                  </label>
+                  <select
+                    value={formData.badge}
+                    onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Yorliq yo'q</option>
+                    <option value="top">Top</option>
+                    <option value="discount">15%</option>
+                    <option value="recommended">Tavsiya etiladi</option>
+                  </select>
+                </div>
+
                 <ImageUpload
                   currentImage={formData.image_url}
                   onImageUploaded={(url) => setFormData({ ...formData, image_url: url || '' })}
