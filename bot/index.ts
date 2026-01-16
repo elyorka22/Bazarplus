@@ -19,10 +19,18 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-// Main menu keyboard with permanent reply buttons
+// Main menu keyboard with reply buttons (not persistent, can be hidden)
 const mainKeyboard = Markup.keyboard([
   ['🌐 Sayt haqida', '🏪 Sotuvchi bo\'lish']
-]).resize().persistent()
+]).resize()
+
+// Inline keyboard buttons (disappear after clicking)
+const inlineKeyboard = Markup.inlineKeyboard([
+  [
+    Markup.button.callback('🌐 Sayt haqida', 'site_about'),
+    Markup.button.callback('🏪 Sotuvchi bo\'lish', 'become_seller')
+  ]
+])
 
 // Start command
 bot.start(async (ctx) => {
@@ -46,7 +54,7 @@ bot.start(async (ctx) => {
       'Quyidagi tugmalardan birini tanlang:'
 
     console.log('Sending welcome message:', welcomeMessage)
-    await ctx.reply(welcomeMessage, mainKeyboard)
+    await ctx.reply(welcomeMessage, inlineKeyboard)
     
     // Отправить Chat ID пользователю (для магазинов)
     await ctx.reply(
@@ -63,12 +71,43 @@ bot.start(async (ctx) => {
     await ctx.reply(
       'Assalomu alaykum! BazarPlus do\'koniga xush kelibsiz! 🛒\n\n' +
       'Quyidagi tugmalardan birini tanlang:',
-      mainKeyboard
+      inlineKeyboard
     )
   }
 })
 
-// Handle "Sayt haqida" button
+// Handle "Sayt haqida" button (inline callback)
+bot.action('site_about', async (ctx) => {
+  try {
+    await ctx.answerCbQuery() // Acknowledge the button click
+    
+    // Get site info from database
+    const { data: siteInfo } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'site_about')
+      .single()
+
+    const aboutText = siteInfo?.value || 
+      'BazarPlus - bu onlayn do\'kon platformasi bo\'lib, mijozlar va sotuvchilar uchun qulay xizmat ko\'rsatadi.\n\n' +
+      'Bizning saytimiz orqali:\n' +
+      '✅ Turli mahsulotlarni topish va sotib olish\n' +
+      '✅ Tez va qulay yetkazib berish\n' +
+      '✅ Xavfsiz to\'lov tizimi\n' +
+      '✅ 24/7 mijozlar xizmati\n\n' +
+      'Sayt: ' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://bazarplus.uz')
+
+    await ctx.reply(aboutText, inlineKeyboard)
+  } catch (error) {
+    console.error('Error getting site info:', error)
+    await ctx.reply(
+      'BazarPlus - bu onlayn do\'kon platformasi. Batafsil ma\'lumot uchun saytimizga tashrif buyuring.',
+      inlineKeyboard
+    )
+  }
+})
+
+// Handle "Sayt haqida" button (text message fallback)
 bot.hears('🌐 Sayt haqida', async (ctx) => {
   try {
     // Get site info from database
@@ -87,17 +126,72 @@ bot.hears('🌐 Sayt haqida', async (ctx) => {
       '✅ 24/7 mijozlar xizmati\n\n' +
       'Sayt: ' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://bazarplus.uz')
 
-    await ctx.reply(aboutText, mainKeyboard)
+    await ctx.reply(aboutText, inlineKeyboard)
   } catch (error) {
     console.error('Error getting site info:', error)
     await ctx.reply(
       'BazarPlus - bu onlayn do\'kon platformasi. Batafsil ma\'lumot uchun saytimizga tashrif buyuring.',
-      mainKeyboard
+      inlineKeyboard
     )
   }
 })
 
-// Handle "Sotuvchi bo'lish" button
+// Handle "Sotuvchi bo'lish" button (inline callback)
+bot.action('become_seller', async (ctx) => {
+  try {
+    await ctx.answerCbQuery() // Acknowledge the button click
+    
+    // Get "become seller" page content from database
+    const { data: sellerPage } = await supabase
+      .from('become_seller_page')
+      .select('title, content, image_url')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (sellerPage) {
+      let message = `*${sellerPage.title}*\n\n${sellerPage.content}`
+      
+      if (sellerPage.image_url) {
+        await ctx.replyWithPhoto(sellerPage.image_url, {
+          caption: message,
+          parse_mode: 'Markdown',
+          reply_markup: inlineKeyboard.reply_markup
+        })
+      } else {
+        await ctx.reply(message, {
+          parse_mode: 'Markdown',
+          reply_markup: inlineKeyboard.reply_markup
+        })
+      }
+    } else {
+      const defaultMessage = 
+        '🏪 *Sotuvchi bo\'lish*\n\n' +
+        'Bizning platformamizda o\'z mahsulotlaringizni sotishni boshlang!\n\n' +
+        'Afzalliklari:\n' +
+        '✅ Bepul ro\'yxatdan o\'tish\n' +
+        '✅ Oson mahsulot qo\'shish\n' +
+        '✅ Keng auditoriyaga yetish\n' +
+        '✅ Xavfsiz to\'lov tizimi\n\n' +
+        'Ro\'yxatdan o\'tish uchun saytimizga tashrif buyuring:\n' +
+        (process.env.NEXT_PUBLIC_SITE_URL || 'https://bazarplus.uz') + '/auth/register'
+
+      await ctx.reply(defaultMessage, {
+        parse_mode: 'Markdown',
+        reply_markup: inlineKeyboard.reply_markup
+      })
+    }
+  } catch (error) {
+    console.error('Error getting seller page:', error)
+    await ctx.reply(
+      'Sotuvchi bo\'lish uchun saytimizga tashrif buyuring va ro\'yxatdan o\'ting.',
+      inlineKeyboard
+    )
+  }
+})
+
+// Handle "Sotuvchi bo'lish" button (text message fallback)
 bot.hears('🏪 Sotuvchi bo\'lish', async (ctx) => {
   try {
     // Get "become seller" page content from database
@@ -116,12 +210,12 @@ bot.hears('🏪 Sotuvchi bo\'lish', async (ctx) => {
         await ctx.replyWithPhoto(sellerPage.image_url, {
           caption: message,
           parse_mode: 'Markdown',
-          ...mainKeyboard
+          reply_markup: inlineKeyboard.reply_markup
         })
       } else {
         await ctx.reply(message, {
           parse_mode: 'Markdown',
-          ...mainKeyboard
+          reply_markup: inlineKeyboard.reply_markup
         })
       }
     } else {
@@ -138,14 +232,14 @@ bot.hears('🏪 Sotuvchi bo\'lish', async (ctx) => {
 
       await ctx.reply(defaultMessage, {
         parse_mode: 'Markdown',
-        ...mainKeyboard
+        reply_markup: inlineKeyboard.reply_markup
       })
     }
   } catch (error) {
     console.error('Error getting seller page:', error)
     await ctx.reply(
       'Sotuvchi bo\'lish uchun saytimizga tashrif buyuring va ro\'yxatdan o\'ting.',
-      mainKeyboard
+      inlineKeyboard
     )
   }
 })
@@ -154,14 +248,14 @@ bot.hears('🏪 Sotuvchi bo\'lish', async (ctx) => {
 bot.on('text', async (ctx) => {
   await ctx.reply(
     'Iltimos, quyidagi tugmalardan birini tanlang:',
-    mainKeyboard
+    inlineKeyboard
   )
 })
 
 // Error handling
 bot.catch((err, ctx) => {
   console.error('Bot error:', err)
-  ctx.reply('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', mainKeyboard)
+  ctx.reply('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', inlineKeyboard)
 })
 
 // Start bot
