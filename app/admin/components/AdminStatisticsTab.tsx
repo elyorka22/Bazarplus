@@ -87,11 +87,14 @@ export function AdminStatisticsTab() {
       const totalProducts = products?.length || 0
       const activeProducts = products?.filter((p: { is_active: boolean }) => p.is_active).length || 0
 
-      // Get all orders with order items and products
+      // Get all orders with order items and products (ограничиваем для производительности)
       const { data: allOrders } = await supabase
         .from('orders')
         .select(`
-          *,
+          id,
+          total_amount,
+          status,
+          created_at,
           order_items (
             quantity,
             price,
@@ -107,6 +110,7 @@ export function AdminStatisticsTab() {
           )
         `)
         .order('created_at', { ascending: false })
+        .limit(1000) // Ограничиваем количество заказов для статистики
 
       if (allOrders) {
         // Calculate statistics

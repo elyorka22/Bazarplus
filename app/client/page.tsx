@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Navbar } from '@/components/Navbar'
 import { Plus, Minus, Search } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { BannerCarousel } from '@/components/BannerCarousel'
 import { ProductCategories } from '@/components/ProductCategories'
 
@@ -41,16 +42,26 @@ export default function ClientPage() {
   async function loadProducts() {
     try {
       const supabase = createClient()
+      // Ограничиваем количество загружаемых товаров и выбираем только нужные поля
       const { data, error } = await supabase
         .from('products')
         .select(`
-          *,
+          id,
+          name,
+          description,
+          price,
+          image_url,
+          store_id,
+          stock,
+          category_id,
           stores:store_id (
             name
           )
         `)
         .eq('is_active', true)
         .gt('stock', 0)
+        .order('created_at', { ascending: false })
+        .limit(50) // Ограничиваем начальную загрузку
 
       if (error) {
         console.error('Error loading products:', error)
@@ -59,13 +70,10 @@ export default function ClientPage() {
       }
 
       if (data && data.length > 0) {
-        const formatted = data.map((p: any) => {
-          console.log('Product loaded:', p.id, 'image_url:', p.image_url)
-          return {
-            ...p,
-            store_name: p.stores?.name || 'Noma\'lum do\'kon',
-          }
-        })
+        const formatted = data.map((p: any) => ({
+          ...p,
+          store_name: p.stores?.name || 'Noma\'lum do\'kon',
+        }))
         setProducts(formatted)
       } else {
         setProducts([])
@@ -386,21 +394,16 @@ export default function ClientPage() {
                   >
                     <div className="relative h-32 sm:h-48 bg-gradient-to-br from-primary-200 to-secondary-200 flex items-center justify-center overflow-hidden">
                       {product.image_url && product.image_url.trim() !== '' ? (
-                        <img
+                        <Image
                           src={product.image_url}
                           alt={product.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 20vw, 16vw"
+                          className="object-cover"
+                          loading="lazy"
                           onError={(e) => {
                             console.error('Error loading image for product:', product.id, 'URL:', product.image_url)
                             e.currentTarget.style.display = 'none'
-                            // Show fallback icon if image fails to load
-                            const parent = e.currentTarget.parentElement
-                            if (parent && !parent.querySelector('.fallback-icon')) {
-                              const fallback = document.createElement('div')
-                              fallback.className = 'fallback-icon text-4xl'
-                              fallback.textContent = '🛒'
-                              parent.appendChild(fallback)
-                            }
                           }}
                         />
                       ) : (
