@@ -294,6 +294,12 @@ bot.catch((err, ctx) => {
   ctx.reply('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', inlineKeyboard)
 })
 
+// Set bot commands (will appear in menu button)
+bot.telegram.setMyCommands([
+  { command: 'start', description: 'Botni boshlash' },
+  { command: 'menu', description: 'Tugmalarni ko\'rsatish' }
+])
+
 // Start bot
 if (process.env.TELEGRAM_BOT_TOKEN) {
   bot.launch()
