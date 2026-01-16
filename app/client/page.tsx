@@ -19,6 +19,11 @@ interface Product {
   store_id: string
   stock: number
   category_id: string | null
+  sale_type: string
+  package_type: string | null
+  min_order: number | null
+  max_order: number | null
+  badge: string | null
 }
 
 interface CartItem {
@@ -457,10 +462,34 @@ export default function ClientPage() {
                       )}
                     </div>
                     <div className="p-3 sm:p-4">
-                      <h3 className="font-bold text-sm sm:text-lg mb-1 sm:mb-2 line-clamp-1">{product.name}</h3>
+                      <div className="flex items-start justify-between mb-1 sm:mb-2">
+                        <h3 className="font-bold text-sm sm:text-lg line-clamp-1 flex-1">{product.name}</h3>
+                        {product.badge && (
+                          <span className={`ml-2 px-2 py-0.5 rounded text-xs font-semibold ${
+                            product.badge === 'top' ? 'bg-yellow-100 text-yellow-700' :
+                            product.badge === 'discount' ? 'bg-red-100 text-red-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {product.badge === 'top' ? 'Top' : product.badge === 'discount' ? '15%' : 'Tavsiya'}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2 hidden sm:block">
                         {product.description}
                       </p>
+                      <div className="mb-1 sm:mb-2">
+                        <p className="text-xs text-gray-500 mb-1">
+                          {product.sale_type === 'by_kg' && 'Kg bo\'yicha'}
+                          {product.sale_type === 'by_piece' && 'Dona bo\'yicha'}
+                          {product.sale_type === 'by_package' && `Paket bo'yicha${product.package_type ? ` (${product.package_type})` : ''}`}
+                        </p>
+                        {product.min_order && (
+                          <p className="text-xs text-gray-500">
+                            Min: {product.min_order} {product.sale_type === 'by_kg' ? 'kg' : product.sale_type === 'by_piece' ? 'dona' : 'paket'}
+                            {product.max_order && ` - Max: ${product.max_order} ${product.sale_type === 'by_kg' ? 'kg' : product.sale_type === 'by_piece' ? 'dona' : 'paket'}`}
+                          </p>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500 mb-2 hidden sm:block">Do'kon: {product.store_name}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-base sm:text-2xl font-bold text-primary-600">
