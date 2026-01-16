@@ -57,17 +57,9 @@ bot.start(async (ctx) => {
     console.log('Sending welcome message:', welcomeMessage)
     await ctx.reply(welcomeMessage, inlineKeyboard)
     
-    // Отправить Chat ID пользователю (для магазинов)
-    await ctx.reply(
-      `📱 Sizning Chat ID: \`${chatId}\`\n\n` +
-      `Agar siz do'kon egasiz bo'lsangiz, bu Chat ID ni do'kon sozlamalariga kiriting. ` +
-      `Keyin siz yangi buyurtmalar haqida xabarnoma olasiz.`,
-      { parse_mode: 'Markdown' }
-    )
-    
     // Показать reply keyboard
     await ctx.reply(
-      '📱 Tugmalarni ko\'rish uchun /menu buyrug\'ini yuboring yoki quyidagi tugmalardan foydalaning:',
+      'Quyidagi tugmalardan birini tanlang:',
       mainKeyboard
     )
     
@@ -80,7 +72,7 @@ bot.start(async (ctx) => {
       'Quyidagi tugmalardan birini tanlang:',
       inlineKeyboard
     )
-    await ctx.reply('📱 Tugmalarni ko\'rish uchun /menu buyrug\'ini yuboring:', mainKeyboard)
+    await ctx.reply('Quyidagi tugmalardan birini tanlang:', mainKeyboard)
   }
 })
 
@@ -155,11 +147,17 @@ bot.hears('🌐 Sayt haqida', async (ctx) => {
   }
 })
 
-// Handle "Yopish" (Hide) button - скрыть клавиатуру
-bot.hears('❌ Yopish', async (ctx) => {
+// Handle "Chat ID" button - отправить Chat ID пользователю
+bot.hears('📱 Chat ID', async (ctx) => {
+  const chatId = ctx.chat.id.toString()
   await ctx.reply(
-    'Klaviatura yopildi. Qayta ochish uchun /menu buyrug\'ini yuboring.',
-    Markup.removeKeyboard()
+    `📱 Sizning Chat ID: \`${chatId}\`\n\n` +
+    `Agar siz do'kon egasiz bo'lsangiz, bu Chat ID ni do'kon sozlamalariga kiriting. ` +
+    `Keyin siz yangi buyurtmalar haqida xabarnoma olasiz.`,
+    { 
+      parse_mode: 'Markdown',
+      reply_markup: mainKeyboard.reply_markup
+    }
   )
 })
 
